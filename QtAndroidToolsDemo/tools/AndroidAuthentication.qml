@@ -6,43 +6,41 @@ Page {
     id: page
     padding: 0
 
-    Component.onCompleted: {
-        QtAndroidAuthentication.authenticators = QtAndroidAuthentication.BIOMETRIC_STRONG;
-        QtAndroidAuthentication.title = "Authentication test";
-        QtAndroidAuthentication.description = "Try authenticate";
-        QtAndroidAuthentication.negativeButton = "Cancel";
-    }
-    Connections {
-        target: QtAndroidAuthentication
-        function onError(errString)
+    QtAndroidAuthentication {
+        id: authentication
+        authenticators: QtAndroidAuthentication.BIOMETRIC_STRONG;
+        title: "Authentication test";
+        description: "Try authenticate";
+        negativeButton: "Cancel";
+        onError: (errString)=>
         {
             authenticationResult.text = "Error: " + errString;
         }
-        function onSucceeded()
+        onSucceeded:
         {
             authenticationResult.text = "Succeeded";
             authenticationCancelled.visible = false;
         }
-        function onSucceededAndEncrypted(encryptedText, initializationVect)
+        onSucceededAndEncrypted: (encryptedText, initializationVect)=>
         {
             password.text = encryptedText;
             initializationVector.text = initializationVect;
             authenticationResult.text = "Succeeded";
             authenticationCancelled.visible = false;
         }
-        function onSucceededAndDecrypted(decryptedText)
+        onSucceededAndDecrypted: (decryptedText)=>
         {
             password.text = decryptedText;
             initializationVector.text = "";
             authenticationResult.text = "Succeeded";
             authenticationCancelled.visible = false;
         }
-        function onFailed()
+        onFailed:
         {
             authenticationResult.text = "Failed";
             authenticationCancelled.visible = false;
         }
-        function onCancelled()
+        onCancelled:
         {
             authenticationCancelled.visible = true;
         }
@@ -58,7 +56,7 @@ Page {
             anchors.horizontalCenter: parent.horizontalCenter
             text: "canAuthenticate"
             onClicked: {
-                switch(QtAndroidAuthentication.canAuthenticate())
+                switch(authentication.canAuthenticate())
                 {
                     case QtAndroidAuthentication.BIOMETRIC_STATUS_UNKNOWN:
                         authenticateStatus.text = "BIOMETRIC_STATUS_UNKNOWN";
@@ -95,13 +93,13 @@ Page {
             visible: false
             anchors.horizontalCenter: parent.horizontalCenter
             text: "requestBiometricEnroll"
-            onClicked: QtAndroidAuthentication.requestBiometricEnroll()
+            onClicked: authentication.requestBiometricEnroll()
         }
         Button {
             id: biometricAuthenticateButton
             anchors.horizontalCenter: parent.horizontalCenter
             text: "authenticate"
-            onClicked: QtAndroidAuthentication.authenticate()
+            onClicked: authentication.authenticate()
         }
         Label {
             id: authenticationResult
@@ -129,13 +127,13 @@ Page {
             id: biometricAuthenticateAndEncryptButton
             anchors.horizontalCenter: parent.horizontalCenter
             text: "authenticateAndEncrypt"
-            onClicked: QtAndroidAuthentication.authenticateAndEncrypt(password.text)
+            onClicked: authentication.authenticateAndEncrypt(password.text)
         }
         Button {
             id: biometricAuthenticateAndDecryptButton
             anchors.horizontalCenter: parent.horizontalCenter
             text: "authenticateAndDecrypt"
-            onClicked: QtAndroidAuthentication.authenticateAndDecrypt(password.text, initializationVector.text)
+            onClicked: authentication.authenticateAndDecrypt(password.text, initializationVector.text)
         }
     }
 }

@@ -25,8 +25,9 @@
 
 #include <QJniObject>
 #include <QQmlEngine>
+#include <QQuickItem>
 
-class QAndroidAuthentication : public QObject
+class QAndroidAuthentication : public QQuickItem
 {
     Q_PROPERTY(int authenticators READ getAuthenticators WRITE setAuthenticators)
     Q_PROPERTY(QString title READ getTitle WRITE setTitle)
@@ -34,13 +35,10 @@ class QAndroidAuthentication : public QObject
     Q_PROPERTY(QString negativeButton READ getNegativeButton WRITE setNegativeButton)
     Q_DISABLE_COPY(QAndroidAuthentication)
     QML_NAMED_ELEMENT(QtAndroidAuthentication)
-    QML_SINGLETON
     Q_OBJECT
 
-    QAndroidAuthentication() : QAndroidAuthentication(nullptr) {}
-
 public:
-    QAndroidAuthentication(QObject *parent);
+    QAndroidAuthentication(QQuickItem *parent = nullptr);
 
     enum AUTHENTICATOR_TYPE
     {
@@ -60,9 +58,6 @@ public:
         BIOMETRIC_ERROR_UNSUPPORTED
     };
     Q_ENUM(BIOMETRIC_STATUS)
-
-    static QAndroidAuthentication* create(QQmlEngine *engine, QJSEngine *scriptEngine);
-    static QAndroidAuthentication* instance();
 
     Q_INVOKABLE int canAuthenticate();
     Q_INVOKABLE bool requestBiometricEnroll();
@@ -90,14 +85,13 @@ Q_SIGNALS:
 
 private:
     const QJniObject m_javaAuthentication;
-    static QAndroidAuthentication *m_pInstance;
     QString m_title, m_description, m_negativeButton;
     int m_authenticators;
 
-    static void authenticationError(JNIEnv *env, jobject thiz, jstring error);
-    static void authenticationSucceeded(JNIEnv *env, jobject thiz);
-    static void authenticationAndEncryptionSucceeded(JNIEnv *env, jobject thiz, jstring encryptedText, jstring initializationVector);
-    static void authenticationAndDecryptionSucceeded(JNIEnv *env, jobject thiz, jstring decryptedText);
-    static void authenticationFailed(JNIEnv *env, jobject thiz);
-    static void authenticationCancelled(JNIEnv *env, jobject thiz);
+    static void authenticationError(JNIEnv *env, jobject thiz, jlong instancePtr, jstring error);
+    static void authenticationSucceeded(JNIEnv *env, jobject thiz, jlong instancePtr);
+    static void authenticationAndEncryptionSucceeded(JNIEnv *env, jobject thiz, jlong instancePtr, jstring encryptedText, jstring initializationVector);
+    static void authenticationAndDecryptionSucceeded(JNIEnv *env, jobject thiz, jlong instancePtr, jstring decryptedText);
+    static void authenticationFailed(JNIEnv *env, jobject thiz, jlong instancePtr);
+    static void authenticationCancelled(JNIEnv *env, jobject thiz, jlong instancePtr);
 };

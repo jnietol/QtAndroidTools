@@ -24,24 +24,21 @@
 #include <QCoreApplication>
 #include "QAndroidAuthentication.h"
 
-QAndroidAuthentication *QAndroidAuthentication::m_pInstance = nullptr;
-
-QAndroidAuthentication::QAndroidAuthentication(QObject *parent) : QObject(parent),
-                                                                  m_javaAuthentication("com/falsinsoft/qtandroidtools/AndroidAuthentication",
-                                                                                       QNativeInterface::QAndroidApplication::context()),
-                                                                  m_authenticators(0)
+QAndroidAuthentication::QAndroidAuthentication(QQuickItem *parent) : QQuickItem(parent),
+                                                                     m_javaAuthentication("com/falsinsoft/qtandroidtools/AndroidAuthentication",
+                                                                                          reinterpret_cast<jlong>(this),
+                                                                                          QNativeInterface::QAndroidApplication::context()),
+                                                                     m_authenticators(0)
 {
-    m_pInstance = this;
-
     if(m_javaAuthentication.isValid())
     {
         const JNINativeMethod jniMethod[] = {
-            {"authenticationError", "(Ljava/lang/String;)V", reinterpret_cast<void*>(&QAndroidAuthentication::authenticationError)},
-            {"authenticationSucceeded", "()V", reinterpret_cast<void*>(&QAndroidAuthentication::authenticationSucceeded)},
-            {"authenticationAndEncryptionSucceeded", "(Ljava/lang/String;Ljava/lang/String;)V", reinterpret_cast<void*>(&QAndroidAuthentication::authenticationAndEncryptionSucceeded)},
-            {"authenticationAndDecryptionSucceeded", "(Ljava/lang/String;)V", reinterpret_cast<void*>(&QAndroidAuthentication::authenticationAndDecryptionSucceeded)},
-            {"authenticationFailed", "()V", reinterpret_cast<void*>(&QAndroidAuthentication::authenticationFailed)},
-            {"authenticationCancelled", "()V", reinterpret_cast<void*>(&QAndroidAuthentication::authenticationCancelled)}
+            {"authenticationError", "(JLjava/lang/String;)V", reinterpret_cast<void*>(&QAndroidAuthentication::authenticationError)},
+            {"authenticationSucceeded", "(J)V", reinterpret_cast<void*>(&QAndroidAuthentication::authenticationSucceeded)},
+            {"authenticationAndEncryptionSucceeded", "(JLjava/lang/String;Ljava/lang/String;)V", reinterpret_cast<void*>(&QAndroidAuthentication::authenticationAndEncryptionSucceeded)},
+            {"authenticationAndDecryptionSucceeded", "(JLjava/lang/String;)V", reinterpret_cast<void*>(&QAndroidAuthentication::authenticationAndDecryptionSucceeded)},
+            {"authenticationFailed", "(J)V", reinterpret_cast<void*>(&QAndroidAuthentication::authenticationFailed)},
+            {"authenticationCancelled", "(J)V", reinterpret_cast<void*>(&QAndroidAuthentication::authenticationCancelled)}
         };
         QJniEnvironment jniEnv;
         jclass objectClass;
@@ -50,19 +47,6 @@ QAndroidAuthentication::QAndroidAuthentication(QObject *parent) : QObject(parent
         jniEnv->RegisterNatives(objectClass, jniMethod, sizeof(jniMethod)/sizeof(JNINativeMethod));
         jniEnv->DeleteLocalRef(objectClass);
     }
-}
-
-QAndroidAuthentication* QAndroidAuthentication::create(QQmlEngine *engine, QJSEngine *scriptEngine)
-{
-    Q_UNUSED(engine);
-    Q_UNUSED(scriptEngine);
-
-    return new QAndroidAuthentication();
-}
-
-QAndroidAuthentication* QAndroidAuthentication::instance()
-{
-    return m_pInstance;
 }
 
 int QAndroidAuthentication::getAuthenticators() const
@@ -198,68 +182,50 @@ void QAndroidAuthentication::cancel()
     }
 }
 
-void QAndroidAuthentication::authenticationError(JNIEnv *env, jobject thiz, jstring error)
+void QAndroidAuthentication::authenticationError(JNIEnv *env, jobject thiz, jlong instancePtr, jstring error)
 {
     Q_UNUSED(env)
     Q_UNUSED(thiz)
 
-    if(m_pInstance != nullptr)
-    {
-        Q_EMIT m_pInstance->error(QJniObject(error).toString());
-    }
+    Q_EMIT reinterpret_cast<QAndroidAuthentication*>(instancePtr)->error(QJniObject(error).toString());
 }
 
-void QAndroidAuthentication::authenticationSucceeded(JNIEnv *env, jobject thiz)
+void QAndroidAuthentication::authenticationSucceeded(JNIEnv *env, jobject thiz, jlong instancePtr)
 {
     Q_UNUSED(env)
     Q_UNUSED(thiz)
 
-    if(m_pInstance != nullptr)
-    {
-        Q_EMIT m_pInstance->succeeded();
-    }
+    Q_EMIT reinterpret_cast<QAndroidAuthentication*>(instancePtr)->succeeded();
 }
 
-void QAndroidAuthentication::authenticationAndEncryptionSucceeded(JNIEnv *env, jobject thiz, jstring encryptedText, jstring initializationVector)
+void QAndroidAuthentication::authenticationAndEncryptionSucceeded(JNIEnv *env, jobject thiz, jlong instancePtr, jstring encryptedText, jstring initializationVector)
 {
     Q_UNUSED(env)
     Q_UNUSED(thiz)
 
-    if(m_pInstance != nullptr)
-    {
-        Q_EMIT m_pInstance->succeededAndEncrypted(QJniObject(encryptedText).toString(), QJniObject(initializationVector).toString());
-    }
+    Q_EMIT reinterpret_cast<QAndroidAuthentication*>(instancePtr)->succeededAndEncrypted(QJniObject(encryptedText).toString(), QJniObject(initializationVector).toString());
 }
 
-void QAndroidAuthentication::authenticationAndDecryptionSucceeded(JNIEnv *env, jobject thiz, jstring decryptedText)
+void QAndroidAuthentication::authenticationAndDecryptionSucceeded(JNIEnv *env, jobject thiz, jlong instancePtr, jstring decryptedText)
 {
     Q_UNUSED(env)
     Q_UNUSED(thiz)
 
-    if(m_pInstance != nullptr)
-    {
-        Q_EMIT m_pInstance->succeededAndDecrypted(QJniObject(decryptedText).toString());
-    }
+    Q_EMIT reinterpret_cast<QAndroidAuthentication*>(instancePtr)->succeededAndDecrypted(QJniObject(decryptedText).toString());
 }
 
-void QAndroidAuthentication::authenticationFailed(JNIEnv *env, jobject thiz)
+void QAndroidAuthentication::authenticationFailed(JNIEnv *env, jobject thiz, jlong instancePtr)
 {
     Q_UNUSED(env)
     Q_UNUSED(thiz)
 
-    if(m_pInstance != nullptr)
-    {
-        Q_EMIT m_pInstance->failed();
-    }
+    Q_EMIT reinterpret_cast<QAndroidAuthentication*>(instancePtr)->failed();
 }
 
-void QAndroidAuthentication::authenticationCancelled(JNIEnv *env, jobject thiz)
+void QAndroidAuthentication::authenticationCancelled(JNIEnv *env, jobject thiz, jlong instancePtr)
 {
     Q_UNUSED(env)
     Q_UNUSED(thiz)
 
-    if(m_pInstance != nullptr)
-    {
-        Q_EMIT m_pInstance->cancelled();
-    }
+    Q_EMIT reinterpret_cast<QAndroidAuthentication*>(instancePtr)->cancelled();
 }

@@ -52,6 +52,7 @@ public class AndroidAuthentication
 {
     private static final String TAG = "AndroidAuthentication";
     private final Activity mActivityInstance;
+    private final long mInstancePtr;
 
     private int mAuthenticators = 0;
     private String mTitle = new String();
@@ -66,8 +67,9 @@ public class AndroidAuthentication
         DECRYPT
     }
 
-    public AndroidAuthentication(Context context)
+    public AndroidAuthentication(long instancePtr, Context context)
     {
+        mInstancePtr = instancePtr;
         mActivityInstance = (Activity)context;
         mCancellationSignal.setOnCancelListener(new CancellationSignalListener());
     }
@@ -236,7 +238,7 @@ public class AndroidAuthentication
         public void onAuthenticationError(int errorCode, CharSequence errString)
         {
             super.onAuthenticationError(errorCode, errString);
-            authenticationError(errString.toString());
+            authenticationError(mInstancePtr, errString.toString());
         }
 
         @Override
@@ -254,30 +256,30 @@ public class AndroidAuthentication
                     cryptoObj = result.getCryptoObject();
                     if(cryptoObj == null)
                     {
-                        authenticationError("No crypto object available");
+                        authenticationError(mInstancePtr, "No crypto object available");
                         return;
                     }
                     cipher = cryptoObj.getCipher();
                     if(cipher == null)
                     {
-                        authenticationError("No crypto cipher available");
+                        authenticationError(mInstancePtr, "No crypto cipher available");
                         return;
                     }
 
                     if(mCryptoTask == CryptoTask.ENCRYPT)
-                        authenticationAndEncryptionSucceeded(Base64.encodeToString(cipher.doFinal(mCipherText), Base64.NO_WRAP), Base64.encodeToString(cipher.getIV(), Base64.NO_WRAP));
+                        authenticationAndEncryptionSucceeded(mInstancePtr, Base64.encodeToString(cipher.doFinal(mCipherText), Base64.NO_WRAP), Base64.encodeToString(cipher.getIV(), Base64.NO_WRAP));
                     else
-                        authenticationAndDecryptionSucceeded(new String(cipher.doFinal(mCipherText), StandardCharsets.UTF_8));
+                        authenticationAndDecryptionSucceeded(mInstancePtr, new String(cipher.doFinal(mCipherText), StandardCharsets.UTF_8));
                 }
                 catch(Exception e)
                 {
-                    authenticationError("Enecrypt/decrypt failed: " + e.getMessage());
+                    authenticationError(mInstancePtr, "Enecrypt/decrypt failed: " + e.getMessage());
                     return;
                 }
             }
             else
             {
-                authenticationSucceeded();
+                authenticationSucceeded(mInstancePtr);
             }
         }
 
@@ -285,7 +287,7 @@ public class AndroidAuthentication
         public void onAuthenticationFailed()
         {
             super.onAuthenticationFailed();
-            authenticationFailed();
+            authenticationFailed(mInstancePtr);
         }
     }
 
@@ -294,7 +296,7 @@ public class AndroidAuthentication
         @Override
         public void onCancel()
         {
-            authenticationCancelled();
+            authenticationCancelled(mInstancePtr);
         }
     }
 
@@ -303,7 +305,7 @@ public class AndroidAuthentication
         @Override
         public void onClick(DialogInterface dialog, int which)
         {
-            authenticationCancelled();
+            authenticationCancelled(mInstancePtr);
         }
     }
 
@@ -375,10 +377,10 @@ public class AndroidAuthentication
     private final int BIOMETRIC_ERROR_NONE_ENROLLED = 4;
     private final int BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED = 5;
 
-    private static native void authenticationError(String error);
-    private static native void authenticationSucceeded();
-    private static native void authenticationAndEncryptionSucceeded(String encryptedText, String initializationVector);
-    private static native void authenticationAndDecryptionSucceeded(String decryptedText);
-    private static native void authenticationFailed();
-    private static native void authenticationCancelled();
+    private static native void authenticationError(long instancePtr, String error);
+    private static native void authenticationSucceeded(long instancePtr);
+    private static native void authenticationAndEncryptionSucceeded(long instancePtr, String encryptedText, String initializationVector);
+    private static native void authenticationAndDecryptionSucceeded(long instancePtr, String decryptedText);
+    private static native void authenticationFailed(long instancePtr);
+    private static native void authenticationCancelled(long instancePtr);
 }
